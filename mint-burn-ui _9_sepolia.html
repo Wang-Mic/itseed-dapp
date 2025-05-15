@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ITSEED 控制台</title>
+  <!-- 使用 Bootstrap 5 美化介面 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <header class="text-center mb-5">
+      <h1 class="fw-bold">🚀 ITSEEDCoin 控制台</h1>
+    </header>
+
+    <div class="card mb-4 shadow-sm">
+      <div class="card-body">
+        <div class="row gy-2">
+          <div class="col-md-6"><strong>🧑 錢包地址：</strong> <span id="wallet">未連接</span></div>
+          <div class="col-md-6"><strong>💰 餘額：</strong> <span id="balance">-</span> ITS</div>
+          <div class="col-md-6"><strong>🪙 Symbol：</strong> <span id="symbol">-</span></div>
+          <div class="col-md-6"><strong>🔢 Decimals：</strong> <span id="decimals">-</span></div>
+          <div class="col-md-6"><strong>📈 Total Supply：</strong> <span id="supply">-</span></div>
+          <div class="col-md-6"><strong>🆕 合約版本：</strong> <span id="version">尚未查詢</span></div>
+          <div class="col-md-6 text-end">          
+            <button onclick="connect()" class="btn btn-primary">🔗 連接 MetaMask</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+      <div class="col-lg-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header">🪙 Mint</div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label for="mintTo" class="form-label">接收地址</label>
+              <input id="mintTo" class="form-control" />
+            </div>
+            <div class="mb-3">
+              <label for="mintAmount" class="form-label">數量</label>
+              <input id="mintAmount" type="number" class="form-control" />
+            </div>
+            <button onclick="mint()" class="btn btn-success w-100">Mint</button>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header">🔥 Burn</div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label for="burnAmount" class="form-label">數量</label>
+              <input id="burnAmount" type="number" class="form-control" />
+            </div>
+            <button onclick="burn()" class="btn btn-danger w-100">Burn</button>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header">🔥 BurnFrom</div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label for="burnFromAddress" class="form-label">目標地址</label>
+              <input id="burnFromAddress" class="form-control" />
+            </div>
+            <div class="mb-3">
+              <label for="burnFromAmount" class="form-label">數量</label>
+              <input id="burnFromAmount" type="number" class="form-control" />
+            </div>
+            <button onclick="burnFrom()" class="btn btn-danger w-100">BurnFrom</button>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header">✅ Approve</div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label for="approveTo" class="form-label">授權地址</label>
+              <input id="approveTo" class="form-control" />
+            </div>
+            <div class="mb-3">
+              <label for="approveAmount" class="form-label">數量</label>
+              <input id="approveAmount" type="number" class="form-control" />
+            </div>
+            <button onclick="approve()" class="btn btn-warning w-100">Approve</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header">🔑 角色管理</div>
+      <div class="card-body row g-3 align-items-end">
+        <div class="col-md-5">
+          <label for="roleAddress" class="form-label">地址</label>
+          <input id="roleAddress" class="form-control" />
+        </div>
+        <div class="col-md-3">
+          <label for="roleType" class="form-label">角色</label>
+          <select id="roleType" class="form-select">
+            <option value="0">DEFAULT_ADMIN_ROLE</option>
+            <option value="MINTER_ROLE">MINTER_ROLE</option>
+            <option value="PAUSER_ROLE">PAUSER_ROLE</option>
+            <option value="UPGRADER_ROLE">UPGRADER_ROLE</option>
+          </select>
+        </div>
+        <div class="col-md-4 d-grid gap-2">
+          <button onclick="grant()" class="btn btn-primary">授權角色</button>
+          <button onclick="revoke()" class="btn btn-secondary">撤銷角色</button>
+          <button onclick="check()" class="btn btn-info">檢查角色</button>
+        </div>
+        <div class="col-12">
+          <p id="roleResult" class="mt-3 fw-semibold">-</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between mb-4">
+      <button onclick="pause()" class="btn btn-outline-danger">⏸️ Pause</button>
+      <button onclick="unpause()" class="btn btn-outline-success">▶️ Unpause</button>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header">🔍 查詢其他人餘額</div>
+      <div class="card-body d-flex gap-2">
+        <input id="otherAddress" class="form-control" placeholder="地址" />
+        <button onclick="checkBalance()" class="btn btn-outline-primary">查詢</button>
+      </div>
+      <p id="otherBalance" class="mt-2">-</p>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header">🎖️ 勳章領取區</div>
+      <div class="card-body">
+        <button onclick="checkAndIssueBadge()" class="btn btn-outline-warning">領取徽章</button>
+        <p id="badgeStatus" class="mt-3">尚未執行</p>
+        <div id="badgeImg"></div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-header">📜 已領徽章清單</div>
+      <div class="card-body">
+        <button onclick="loadAllRecipients()" class="btn btn-outline-secondary mb-3">🔄 載入名單</button>
+        <div id="recipientList">尚無領取紀錄</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 將原有 JavaScript 邏輯保留於此 -->
+  <script>   
+    const contractAddress = "0x9712c49CFff5cE42246E2886Ef47A80A95c8afE3"; //0xYour_ITSEED_proxy
+    const badgeIssuerAddress = "0x6812680bd3d62310228a5744236B6B54d69a92Cc"; //0xYour_BadgeIssuer
+    const badgeContractAddress = "0x982Bf096B7f8A3D9Ed0175Ff4d9a683bf56e0D8D"; //0xYour_ITTESTBadge
+    let issuer; // 🔓 在全域宣告
+  
+    const abi = [
+      "function symbol() view returns (string)",
+      "function decimals() view returns (uint8)",
+      "function totalSupply() view returns (uint256)",
+      "function balanceOf(address) view returns (uint256)",
+      "function mint(address, uint256)",
+      "function burn(uint256)",
+      "function burnFrom(address, uint256)",
+      "function approve(address,uint256)",
+      "function pause()", "function unpause()",
+      "function grantRole(bytes32,address)",
+      "function revokeRole(bytes32,address)",
+      "function hasRole(bytes32,address) view returns (bool)"
+    ];
+
+    const badgeIssuerAbi = [
+      "function checkAndIssue() external",
+      "function eligible(address) view returns (bool)",
+      "function hasIssued(address) view returns (bool)",
+      "function getRecipientAt(uint256) view returns (address,uint256)"
+
+    ];
+
+    const badgeAbi = [
+      "function tokenURI(uint256 tokenId) view returns (string)",    
+      "function tokenURI(uint256) view returns (string)"  
+    ];
+
+    const ROLES = {
+      "0": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "MINTER_ROLE": ethers.id("MINTER_ROLE"),
+      "PAUSER_ROLE": ethers.id("PAUSER_ROLE"),
+      "UPGRADER_ROLE": ethers.id("UPGRADER_ROLE"),
+    };
+
+    let provider, signer, contract, decimals;
+
+    async function connect() {
+      provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      signer = await provider.getSigner();
+      contract = new ethers.Contract(contractAddress, abi, signer);
+      // ➕ 顯示錢包地址
+      document.getElementById("wallet").innerText = signer.address;
+      // 1. 先拿到 decimals
+      decimals = await contract.decimals();
+      document.getElementById("decimals").innerText = decimals;
+
+      // 再拿 Symbol、Total Supply
+      document.getElementById("symbol").innerText = await contract.symbol();
+      const supply = await contract.totalSupply();
+      document.getElementById("supply").innerText = ethers.formatUnits(supply, decimals);
+
+      // 2. 呼叫 checkVersion (這時候已經是全域可見的函式)
+      await checkVersion();
+
+      // 最後再更新餘額
+      updateBalance();
+  }
+
+    async function updateBalance() {
+      const bal = await contract.balanceOf(signer.address);
+      document.getElementById("balance").innerText = ethers.formatUnits(bal, decimals);
+    }
+
+    async function mint() {
+      const to = document.getElementById("mintTo").value;
+      const amount = document.getElementById("mintAmount").value;
+      const tx = await contract.mint(to, ethers.parseUnits(amount, decimals));
+      await tx.wait();
+      updateBalance();
+    }
+
+    async function burn() {
+      const amount = document.getElementById("burnAmount").value;
+      const tx = await contract.burn(ethers.parseUnits(amount, decimals));
+      await tx.wait();
+      updateBalance();
+    }
+
+    async function burnFrom() {
+      const addr = document.getElementById("burnFromAddress").value;
+      const amount = document.getElementById("burnFromAmount").value;
+      const tx = await contract.burnFrom(addr, ethers.parseUnits(amount, decimals));
+      await tx.wait();
+    }
+
+    async function approve() {
+      const to = document.getElementById("approveTo").value;
+      const amount = document.getElementById("approveAmount").value;
+      const tx = await contract.approve(to, ethers.parseUnits(amount, decimals));
+      await tx.wait();
+    }
+
+    async function pause() {
+      const tx = await contract.pause();
+      await tx.wait();
+      alert("✅ 合約已暫停");
+    }
+
+    async function unpause() {
+      const tx = await contract.unpause();
+      await tx.wait();
+      alert("✅ 合約已恢復");
+    }
+
+    async function grant() {
+      const role = ROLES[document.getElementById("roleType").value];
+      const addr = document.getElementById("roleAddress").value;
+      const tx = await contract.grantRole(role, addr);
+      await tx.wait();
+    }
+
+    async function revoke() {
+      const role = ROLES[document.getElementById("roleType").value];
+      const addr = document.getElementById("roleAddress").value;
+      const tx = await contract.revokeRole(role, addr);
+      await tx.wait();
+    }
+
+    async function check() {
+      const role = ROLES[document.getElementById("roleType").value];
+      const addr = document.getElementById("roleAddress").value;
+      const has = await contract.hasRole(role, addr);
+      document.getElementById("roleResult").innerText = has ? "✅ 擁有此角色" : "❌ 沒有此角色";
+    }
+
+    async function checkBalance() {
+      const addr = document.getElementById("otherAddress").value;
+      const bal = await contract.balanceOf(addr);
+      document.getElementById("otherBalance").innerText = ethers.formatUnits(bal, decimals);
+    }
+
+    async function checkAndIssueBadge() {
+      issuer = new ethers.Contract(badgeIssuerAddress, badgeIssuerAbi, signer);
+      const badge = new ethers.Contract(badgeContractAddress, badgeAbi, signer);
+      const addr = signer.address;
+
+      try {
+        const has = await issuer.hasIssued(addr);
+        if (has) {
+          document.getElementById("badgeStatus").innerText = "✅ 已領取徽章";
+          const uri = await badge.tokenURI(0);
+          await renderBadgeImage(uri);
+          return;
+        }
+
+        const eligible = await issuer.eligible(addr);
+        if (!eligible) {
+          document.getElementById("badgeStatus").innerText = "❌ 尚未達條件（需持有 500+ ITSEED）";
+          return;
+        }
+
+        const tx = await issuer.checkAndIssue();
+        await tx.wait();
+        document.getElementById("badgeStatus").innerText = "🎉 勳章已發送！";
+
+        const uri = await badge.tokenURI(0);
+        await renderBadgeImage(uri);
+
+      } catch (e) {
+        document.getElementById("badgeStatus").innerText = "❌ 發送失敗：" + (e.reason || e.message);
+      }
+    }
+
+    async function renderBadgeImage(uri) {
+      const imgUrl = await extractImageFromTokenURI(uri);
+      const container = document.getElementById("badgeImg");
+      container.innerHTML = "";
+
+      if (!imgUrl) {
+        container.innerHTML = `<p style="color:red;"></p>`;
+        return;
+      }
+
+      const img = document.createElement("img");
+      img.width = 300;
+      img.src = imgUrl;
+      img._fallbacks = [
+        imgUrl.replace("gateway.pinata.cloud", "ipfs.io"),
+        imgUrl.replace("gateway.pinata.cloud", "cloudflare-ipfs.com")
+      ];
+      img._attempt = 0;
+      img._blobTried = false;
+
+      img.onerror = function () {
+        if (this._attempt < this._fallbacks.length) {
+          const next = this._fallbacks[this._attempt++];
+          console.warn(`⛑️ 圖片載入失敗，嘗試替代網址：${next}`);
+          this.src = next;
+        } else if (!this._blobTried) {
+          this._blobTried = true;
+          fetch(imgUrl)
+            .then(resp => resp.blob())
+            .then(blob => {
+              this.src = URL.createObjectURL(blob);
+            })
+            .catch(e => console.error("❌ Blob fallback failed:", e));
+        } else {
+          console.error("🚫 所有圖片方式皆失敗");
+        }
+      };
+
+      container.appendChild(img);
+    }
+
+    async function extractImageFromTokenURI(uri) {
+      try {
+        if (uri.startsWith("data:")) return uri;
+        const res = await fetch(uri);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        console.log("🎯 metadata JSON", json);
+
+        let url = json.image || json.image_url || json.image_data;
+        if (!url) throw new Error("❌ metadata 無 image 欄位");
+
+        if (url.startsWith("ipfs://")) {
+          url = url.replace("ipfs://", "https://ipfs.io/ipfs/");
+        }
+        return url;
+      } catch (e) {
+        console.error("extractImageFromTokenURI error", e);
+        return "";
+      }
+    }
+    async function loadAllRecipients() {
+      const issuer = new ethers.Contract(badgeIssuerAddress, badgeIssuerAbi, provider);
+      const badge = new ethers.Contract(badgeContractAddress, badgeAbi, provider);
+
+      const container = document.getElementById("recipientList");
+      container.innerHTML = "⏳ 載入中...";
+      let html = "";
+      
+      let index = 0;
+      try {
+        while (true) {
+          const [addr, tokenId] = await issuer.getRecipientAt(index);
+          let tokenURI = "";
+          let imgTag = "";
+
+          try {
+            tokenURI = await badge.tokenURI(tokenId);
+            const meta = await fetch(tokenURI).then(res => res.json());
+            const image = meta.image || meta.image_url;
+            if (image) {
+              imgTag = `<img src="${image}" width="100" style="border:1px solid #ccc; margin-top:4px;"><br>`;
+            }
+          } catch (e) {
+            imgTag = `<p style="color:red;"></p>`;
+          }
+
+          html += `
+            <div style="margin-bottom:16px;">
+              <b>#${tokenId}</b><br>
+              🎁 <code>${addr}</code><br>
+              URI: <a href="${tokenURI}" target="_blank">${tokenURI}</a><br>
+              ${imgTag}
+            </div>
+          `;
+
+          index++;
+        }
+      } catch (e) {
+        // 全部讀完
+      }
+
+      container.innerHTML = html || "<p>尚無領取紀錄</p>";
+    }      
+    async function checkVersion() {
+      try {
+        const token = new ethers.Contract(
+          contractAddress,
+          ["function version() view returns (string)"],
+          provider
+        );
+        const ver = await token.version();
+        document.getElementById("version").innerText = ver;
+      } catch (e) {
+        console.error("查詢版本錯誤", e);
+        document.getElementById("version").innerText = "查詢失敗";
+      }
+    }      
+          
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
